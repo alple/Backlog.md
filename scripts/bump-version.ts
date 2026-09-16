@@ -14,6 +14,11 @@ function git(args: string[]): { status: number; stdout: string; stderr: string }
 	return { status: result.status ?? 1, stdout: (result.stdout ?? "").trim(), stderr: (result.stderr ?? "").trim() };
 }
 
+function gitError(step: string, result: { stdout: string; stderr: string }): string {
+	const output = `${result.stderr}\n${result.stdout}`.trim();
+	return `${step} failed${output ? `:\n${output}` : ""}`;
+}
+
 function main() {
 	const input = process.argv[2];
 	if (!input) fail("usage: bun run bump <major|minor|patch|x.y[.z]>");
@@ -41,6 +46,7 @@ function main() {
 
 	const nextVersion = next.join(".");
 	if (nextVersion === current) fail(`already at version ${current}`);
+	packageJson.version = nextVersion;
 
 	// Fork tag scheme: x.y.0 tags as vX.Y, anything else keeps its patch digit.
 	const tag = `v${nextVersion.replace(/\.0$/, "")}`;
@@ -52,11 +58,11 @@ function main() {
 
 	// Stage first so lint-staged's pre-commit hook has files to operate on.
 	const add = git(["add", "package.json"]);
-	if (add.status !== 0) fail(`git add package.json failed: ${add.stderr}`);
+	if (add.status !== 0) fail(gitError("git add package.json", add));
 	const commit = git(["commit", "-m", `chore: bump version to ${nextVersion}`, "--", "package.json"]);
-	if (commit.status !== 0) fail(`git commit of package.json failed: ${commit.stderr}`);
+	if (commit.status !== 0) fail(gitError("git commit of package.json", commit));
 	const tagResult = git(["tag", "-a", tag, "-m", `Backlog.md fork ${tag}`]);
-	if (tagResult.status !== 0) fail(`git tag ${tag} failed: ${tagResult.stderr}`);
+	if (tagResult.status !== 0) fail(gitError(`git tag ${tag}`, tagResult));
 
 	const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]).stdout;
 	console.log(`Version bumped: ${current} -> ${nextVersion}, tagged ${tag}.`);
