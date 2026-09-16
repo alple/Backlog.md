@@ -52,7 +52,7 @@
     "check": "biome check .",
     "check:types": "bunx tsc --noEmit",
     "bump": "bun scripts/bump-version.ts",
-    "prepare": "husky && node scripts/prepare-install.cjs",
+    "prepare": "node scripts/prepare-install.cjs",
     "build": "bun scripts/build.ts",
     "cli": "bun src/cli.ts",
     "mcp": "bun src/cli.ts mcp start",
