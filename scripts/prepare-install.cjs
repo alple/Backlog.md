@@ -35,6 +35,11 @@ function main() {
 	if (process.env.BACKLOG_SKIP_PREPARE_BUILD) return;
 	// Registry-style context: nothing to build, the platform packages ship the binary.
 	if (!isSourceCheckout()) return;
+
+	// Git hooks only matter in a real dev checkout; git-install staging clones
+	// may not have husky resolvable, so failures are fine to ignore.
+	spawnSync("husky", { stdio: "ignore" });
+
 	// Already built (e.g. repeated local `bun install`): keep installs fast.
 	if (hasDistBinary()) return;
 
