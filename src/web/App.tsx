@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import BoardPage from './components/BoardPage';
+import SwimBoardPage from './components/SwimBoardPage';
+import BacklogPage from './components/BacklogPage';
+import { filterBoardStatuses, isInitiativeTask } from './lib/status-policy';
 import DocumentationDetail from './components/DocumentationDetail';
 import DecisionDetail from './components/DecisionDetail';
 import TaskList from './components/TaskList';
@@ -257,6 +260,10 @@ function AppContent() {
   // Centralized data state
   const [tasks, setTasks] = useState<Task[]>([]);
   const kanbanTasks = React.useMemo(() => filterKanbanTasks(tasks), [tasks]);
+  // Initiatives are containers, never cards: both boards and the Backlog view skip them the same
+  // way the Backlog status column is skipped. All Tasks keeps them listed and editable.
+  const boardTasks = React.useMemo(() => kanbanTasks.filter((task) => !isInitiativeTask(task)), [kanbanTasks]);
+  const planningTasks = React.useMemo(() => tasks.filter((task) => !isInitiativeTask(task)), [tasks]);
   const [docs, setDocs] = useState<Document[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   // Mirrors of the store lists, so refreshes can reconcile in place without
@@ -938,10 +945,10 @@ function AppContent() {
     <BoardPage
       onEditTask={handleEditTask}
       onNewTask={handleNewTask}
-      tasks={kanbanTasks}
+      tasks={boardTasks}
       onRefreshData={refreshData}
-	  onTasksUpdated={applyReorderedTasks}
-      statuses={statuses}
+      onTasksUpdated={applyReorderedTasks}
+      statuses={filterBoardStatuses(statuses)}
       milestones={milestones}
       availableLabels={availableLabels}
       milestoneEntities={milestoneEntities}
@@ -953,6 +960,44 @@ function AppContent() {
       availablePriorities={config?.priorities}
       availableTypes={availableTypes}
       availableProjects={availableProjects}
+    />
+  );
+
+  const swimBoardPage = (
+    <SwimBoardPage
+      onEditTask={handleEditTask}
+      onNewTask={handleNewTask}
+      tasks={boardTasks}
+      onRefreshData={refreshData}
+      onTasksUpdated={applyReorderedTasks}
+      statuses={filterBoardStatuses(statuses)}
+      availableLabels={availableLabels}
+      isLoading={isLoading}
+      loadingMessage={loadingMessage}
+      loadError={loadError}
+      hideEmptyColumns={config?.hideEmptyColumns ?? false}
+      dateFormat={config?.dateFormat}
+      availablePriorities={config?.priorities}
+      availableTypes={availableTypes}
+      availableProjects={availableProjects}
+    />
+  );
+
+  const backlogPage = (
+    <BacklogPage
+      onEditTask={handleEditTask}
+      onEditDraft={openDraftModal}
+      onNewTask={handleNewTask}
+      tasks={planningTasks}
+      statuses={statuses}
+      availableLabels={availableLabels}
+      availableMilestones={milestones}
+      availablePriorities={config?.priorities}
+      milestoneEntities={milestoneEntities}
+      archivedMilestones={archivedMilestones}
+      onRefreshData={refreshData}
+      dateFormat={config?.dateFormat}
+      isLoading={isLoading}
     />
   );
 
@@ -1000,6 +1045,8 @@ function AppContent() {
               element={<Navigate to={{ pathname: '/board', search: location.search }} replace state={location.state} />}
             />
             <Route path="board" element={boardPage} />
+            <Route path="board/swim" element={swimBoardPage} />
+            <Route path="backlog" element={backlogPage} />
             <Route path="board/:id" element={boardPage} />
             <Route path="board/:id/:title" element={boardPage} />
             <Route
