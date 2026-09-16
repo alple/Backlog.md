@@ -9,9 +9,9 @@ function fail(message: string): never {
 	process.exit(1);
 }
 
-function git(args: string[]): { status: number; stdout: string } {
+function git(args: string[]): { status: number; stdout: string; stderr: string } {
 	const result = spawnSync("git", args, { encoding: "utf8" });
-	return { status: result.status ?? 1, stdout: (result.stdout ?? "").trim() };
+	return { status: result.status ?? 1, stdout: (result.stdout ?? "").trim(), stderr: (result.stderr ?? "").trim() };
 }
 
 function main() {
@@ -50,10 +50,13 @@ function main() {
 
 	writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
+	// Stage first so lint-staged's pre-commit hook has files to operate on.
+	const add = git(["add", "package.json"]);
+	if (add.status !== 0) fail(`git add package.json failed: ${add.stderr}`);
 	const commit = git(["commit", "-m", `chore: bump version to ${nextVersion}`, "--", "package.json"]);
-	if (commit.status !== 0) fail("git commit of package.json failed");
+	if (commit.status !== 0) fail(`git commit of package.json failed: ${commit.stderr}`);
 	const tagResult = git(["tag", "-a", tag, "-m", `Backlog.md fork ${tag}`]);
-	if (tagResult.status !== 0) fail(`git tag ${tag} failed`);
+	if (tagResult.status !== 0) fail(`git tag ${tag} failed: ${tagResult.stderr}`);
 
 	const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]).stdout;
 	console.log(`Version bumped: ${current} -> ${nextVersion}, tagged ${tag}.`);

@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@kilo'
 created_date: '2026-09-16 10:34'
-updated_date: '2026-09-16 10:59'
+updated_date: '2026-09-16 12:05'
 labels: []
 dependencies: []
 ordinal: 321000
@@ -50,6 +50,12 @@ Decision ticket spun off 2026-09-16 after investigating how to run the fork (bra
 
 9. Fork version scheme (added by Alex): new scripts/bump-version.ts + package.json alias bun run bump <major|minor|patch|x.y[.z]> - writes x.y.z to package.json, commits ONLY package.json (pathspec commit, plays nice with dirty worktree), creates annotated tag vX.Y (trailing .0 stripped, e.g. 0.1.0 -> v0.1); refuses if the tag already exists; never pushes - prints the push command (pushing the tag is what triggers the release). Fork starts at 0.1 via explicit first run: bun run bump 0.1.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+E2E verification (npm 11.19.1, local git+file remote as github: proxy): (1) git install with scripts allowed -> prepare built the binary in npm's staging clone, packed via new files entries, installed package runs fork code (task list responds; upstream binary absent). (2) dist-less install -> CLI fails closed with allow-scripts/Releases instructions, never touches upstream packages (BACKLOG_BUILD_MISSING). (3) Direct prepare without bun -> hard failure naming bun, exit 1 (AC#2). Nuance discovered: npm git installs also install devDependencies, and npm prepends node_modules/.bin to lifecycle PATH, so bun can be self-provisioned during installs; the hard-fail manifests when neither user PATH nor devDeps provide bun. Also: npm 11.19 blocks dependency lifecycle scripts by default (allowScripts/ npx --allow-scripts=backlog.md needed) - documented in README. Full test suite: 2911 pass, 8 skip; 1 consistent pre-existing failure (duplicate-task-repair ENAMETOOLONG - reproduces without these changes, environmental NAME_MAX issue, unrelated); 2 flaky PTY/server tests passed on re-run.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 
