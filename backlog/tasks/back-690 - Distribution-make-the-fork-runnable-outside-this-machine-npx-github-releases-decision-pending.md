@@ -3,11 +3,11 @@ id: BACK-690
 title: >-
   Distribution: make the fork runnable outside this machine (npx github /
   releases) - decision pending
-status: In Progress
+status: Done
 assignee:
   - '@kilo'
 created_date: '2026-09-16 10:34'
-updated_date: '2026-09-16 12:05'
+updated_date: '2026-09-16 12:34'
 labels: []
 dependencies: []
 ordinal: 321000
@@ -21,19 +21,19 @@ Decision ticket spun off 2026-09-16 after investigating how to run the fork (bra
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The chosen route is implemented so that installing/running the fork via the chosen channel executes fork code and never the upstream registry binary
-- [ ] #2 If the chosen route requires bun at install time, a missing bun fails with an explicit error naming bun as required (per Alex's amendment); no silent fallback to the upstream package in any path
-- [ ] #3 The immediate local workflow is documented in the fork README or task notes: bun install && bun run build, then dist/backlog on PATH or symlink; node_modules overwrite trick documented as a temporary hack that bun install reverts
-- [ ] #4 Existing-file edits stay minimal and additive where possible (package.json and scripts/resolveBinary.cjs or scripts/cli.cjs are the allowed touch points for options 2-3; CI workflow file for option 1)
-- [ ] #5 bunx tsc --noEmit passes; biome passes on touched files; scoped tests pass
-- [ ] #6 Fork version bumping: bun run bump bumps package.json, commits it, and tags v<X> per the scheme (start v0.1); release workflow triggers on v* tags
+- [x] #1 The chosen route is implemented so that installing/running the fork via the chosen channel executes fork code and never the upstream registry binary
+- [x] #2 If the chosen route requires bun at install time, a missing bun fails with an explicit error naming bun as required (per Alex's amendment); no silent fallback to the upstream package in any path
+- [x] #3 The immediate local workflow is documented in the fork README or task notes: bun install && bun run build, then dist/backlog on PATH or symlink; node_modules overwrite trick documented as a temporary hack that bun install reverts
+- [x] #4 Existing-file edits stay minimal and additive where possible (package.json and scripts/resolveBinary.cjs or scripts/cli.cjs are the allowed touch points for options 2-3; CI workflow file for option 1)
+- [x] #5 bunx tsc --noEmit passes; biome passes on touched files; scoped tests pass
+- [x] #6 Fork version bumping: bun run bump bumps package.json, commits it, and tags v<X> per the scheme (start v0.1); release workflow triggers on v* tags
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 bunx tsc --noEmit passes when TypeScript touched
-- [ ] #2 bun run check . passes when formatting/linting touched
-- [ ] #3 bun test (or scoped test) passes
+- [x] #1 bunx tsc --noEmit passes when TypeScript touched
+- [x] #2 bun run check . passes when formatting/linting touched
+- [x] #3 bun test (or scoped test) passes
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -72,3 +72,9 @@ created: 2026-09-16 10:35
 Verification commands recorded 2026-09-16 (all executed on this machine): bun run build; ./dist/backlog --version -> 1.52.0; npm pack --dry-run -> 6 files 28.4 kB (package.json, scripts/cli.cjs, scripts/postuninstall.cjs, scripts/resolveBinary.cjs); node_modules/backlog.md-linux-x64/backlog --version -> 1.47.1 (upstream); after cp dist/backlog node_modules/backlog.md-linux-x64/backlog: npx -y . --version and npx -y /abs/path --version -> 1.52.0.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented the combined distribution route for the fork. (1) Build-on-install: prepare hook (husky && scripts/prepare-install.cjs) builds dist/backlog with bun on git installs (npx/npm i github:alple/Backlog.md#swimlanes); hard failure naming bun when bun is absent; npm's new allow-scripts gate documented in README. (2) No silent fallback: optionalDependencies removed; the resolver uses only the local dist build and fails closed (BACKLOG_BUILD_MISSING) with fix instructions otherwise - it can never execute the upstream registry binary; registry-mode code removed. (3) Releases: release.yml trimmed to the 6-platform build matrix + GitHub release job, triggered by v* tags on any commit Alex chooses. (4) Fork version scheme: bun run bump <major|minor|patch|x.y[.z]> writes the version, commits, and tags (0.1.0 -> v0.1); release builds report the tag via BACKLOG_BUILD_VERSION. First release published: v0.1 with all 6 platform binaries, workflow run 35094301136 green; downloaded linux-x64 artifact runs and reports version 0.1. Verified with: bunx tsc --noEmit, biome (434 files), scoped tests 28/28, full suite 2911 pass / 1 pre-existing environmental failure (duplicate-task-repair ENAMETOOLONG, reproduces without these changes), and E2E git-install simulations covering the happy path, blocked-scripts fail-closed, and no-bun hard failure.
+<!-- SECTION:FINAL_SUMMARY:END -->
