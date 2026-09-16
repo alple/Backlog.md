@@ -189,6 +189,17 @@ const Icons = {
 			<circle cx="12" cy="12" r="1" strokeWidth={2} />
 		</svg>
 	),
+	SwimLanes: () => (
+		<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16" />
+		</svg>
+	),
+	Backlog: () => (
+		<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h10M4 12h10M4 19h10" />
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 5v14M15 16l3 3 3-3" />
+		</svg>
+	),
 };
 
 // Shared render path for sidebar document links (search results, folder tree, and flat list).
@@ -661,6 +672,36 @@ const SideNavigation = memo(function SideNavigation({
 							<span className="ml-3 text-sm font-medium">Kanban Board</span>
 						</NavLink>
 
+						{/* Kanban Swim Navigation (fork-only epic swim lanes) */}
+						<NavLink
+							to="/board/swim"
+							className={({ isActive }) =>
+								`flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+										: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<Icons.SwimLanes />
+							<span className="ml-3 text-sm font-medium">Kanban Swim</span>
+						</NavLink>
+
+						{/* Backlog Navigation (fork-only planning queue: Draft, Backlog, To Do) */}
+						<NavLink
+							to="/backlog"
+							className={({ isActive }) =>
+								`flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+										: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<Icons.Backlog />
+							<span className="ml-3 text-sm font-medium">Backlog</span>
+						</NavLink>
+
 						{/* Tasks Navigation */}
 						<NavLink
 							to="/tasks"
@@ -873,6 +914,38 @@ const SideNavigation = memo(function SideNavigation({
 						>
 							<div className="w-6 h-6 flex items-center justify-center">
 								<Icons.Board />
+							</div>
+						</NavLink>
+						<NavLink
+							to="/board/swim"
+							data-tooltip-id="sidebar-tooltip"
+							data-tooltip-content="Kanban Swim"
+							className={({ isActive }) =>
+								`flex items-center justify-center p-3 rounded-md transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400'
+										: 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<div className="w-6 h-6 flex items-center justify-center">
+								<Icons.SwimLanes />
+							</div>
+						</NavLink>
+						<NavLink
+							to="/backlog"
+							data-tooltip-id="sidebar-tooltip"
+							data-tooltip-content="Backlog"
+							className={({ isActive }) =>
+								`flex items-center justify-center p-3 rounded-md transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400'
+										: 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<div className="w-6 h-6 flex items-center justify-center">
+								<Icons.Backlog />
 							</div>
 						</NavLink>
 						<NavLink

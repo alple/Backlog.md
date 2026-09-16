@@ -37,6 +37,8 @@ interface TaskListProps {
 	onRefreshData?: () => Promise<void>;
 	dateFormat?: string;
 	isLoading?: boolean;
+	/** Heading above the table; defaults to the All Tasks page's own title. */
+	title?: string;
 }
 
 type TaskSortColumn = "id" | "title" | "status" | "priority" | "ordinal" | "milestone" | "created";
@@ -123,6 +125,7 @@ const TaskList: React.FC<TaskListProps> = ({
 	onRefreshData,
 	dateFormat,
 	isLoading = false,
+	title = "All Tasks",
 }) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const statusOptions = useMemo(
@@ -710,7 +713,7 @@ const TaskList: React.FC<TaskListProps> = ({
 		<div className="page-shell transition-colors duration-200">
 			<div className="flex flex-col gap-4 mb-6">
 				<div className="flex items-center justify-between gap-3">
-						<h1 className="text-2xl font-bold text-gray-900 dark:text-white">All Tasks</h1>
+						<h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
 						<button
 							className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 dark:focus:ring-offset-gray-900 transition-colors duration-200"
 							onClick={onNewTask}
