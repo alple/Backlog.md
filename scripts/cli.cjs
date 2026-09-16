@@ -60,7 +60,12 @@ function main() {
 	let binaryPath;
 	try {
 		binaryPath = resolveBinaryPath();
-	} catch {
+	} catch (error) {
+		if (error?.code === "BACKLOG_BUILD_MISSING") {
+			console.error(error.message);
+			console.error("Alternatively, download a prebuilt binary from the GitHub Releases page.");
+			process.exit(1);
+		}
 		console.error(`Binary package not installed for ${process.platform}-${process.arch}.`);
 		console.error(`Tried packages: ${getCandidatePackageNames().join(", ")}`);
 		printInstallHelp();

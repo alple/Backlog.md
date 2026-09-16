@@ -30,6 +30,9 @@ jobs:
             test_profile: platform
             test_workers: 4
     runs-on: ${{ matrix.os }}
+    env:
+      # Tests bundle src directly; the prepare hook must not build the standalone binary.
+      BACKLOG_SKIP_PREPARE_BUILD: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -97,6 +100,9 @@ jobs:
           - os: windows-latest
             target: bun-windows-x64-baseline
     runs-on: ${{ matrix.os }}
+    env:
+      # This job builds the standalone binary explicitly below.
+      BACKLOG_SKIP_PREPARE_BUILD: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2

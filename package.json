@@ -5,19 +5,13 @@
   "module": "src/cli.ts",
   "files": [
     "scripts/*.cjs",
+    "dist/backlog",
+    "dist/backlog.exe",
     "README.md",
     "LICENSE"
   ],
   "bin": {
     "backlog": "scripts/cli.cjs"
-  },
-  "optionalDependencies": {
-    "backlog.md-darwin-arm64": "*",
-    "backlog.md-darwin-x64": "*",
-    "backlog.md-linux-arm64": "*",
-    "backlog.md-linux-x64": "*",
-    "backlog.md-windows-arm64": "*",
-    "backlog.md-windows-x64": "*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.3",
@@ -57,7 +51,8 @@
     "lint": "biome lint --write .",
     "check": "biome check .",
     "check:types": "bunx tsc --noEmit",
-    "prepare": "husky",
+    "bump": "bun scripts/bump-version.ts",
+    "prepare": "husky && node scripts/prepare-install.cjs",
     "build": "bun scripts/build.ts",
     "cli": "bun src/cli.ts",
     "mcp": "bun src/cli.ts mcp start",

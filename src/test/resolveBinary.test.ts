@@ -1,21 +1,43 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, describe, expect, it } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
 	getPackageName,
 	getCandidatePackageNames,
+	getSourceBinaryPath,
 	isRosettaTranslated,
 	resolveBinaryPath,
 } = require("../../scripts/resolveBinary.cjs");
 
-function resolverFor(available: string[]) {
-	return (specifier: string) => {
-		if (!available.includes(specifier)) {
-			throw new Error(`Cannot find module '${specifier}'`);
-		}
-		return `/node_modules/${specifier}`;
-	};
+const tempDirs: string[] = [];
+
+/** Fresh empty dir standing in for an installed package root (registry mode). */
+function emptyPackageRoot() {
+	const dir = mkdtempSync(join(tmpdir(), "backlog-resolver-"));
+	tempDirs.push(dir);
+	return dir;
 }
+
+/** Package root fixture with optional dist/ binary and src/cli.ts marker. */
+function fixturePackageRoot({ dist, src }: { dist?: string; src?: boolean }) {
+	const dir = emptyPackageRoot();
+	if (dist !== undefined) {
+		mkdirSync(join(dir, "dist"), { recursive: true });
+		writeFileSync(join(dir, "dist", dist), "");
+	}
+	if (src) {
+		mkdirSync(join(dir, "src"), { recursive: true });
+		writeFileSync(join(dir, "src", "cli.ts"), "");
+	}
+	return dir;
+}
+
+afterAll(() => {
+	for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 describe("getPackageName", () => {
 	it("maps win32 platform to windows package", () => {
@@ -67,37 +89,46 @@ describe("getCandidatePackageNames", () => {
 });
 
 describe("resolveBinaryPath", () => {
-	it("resolves the native package when it is installed", () => {
-		const resolver = resolverFor(["backlog.md-darwin-arm64/backlog", "backlog.md-darwin-x64/backlog"]);
-		expect(resolveBinaryPath("darwin", "arm64", resolver)).toBe("/node_modules/backlog.md-darwin-arm64/backlog");
+	it("resolves a dist build regardless of installed registry packages", () => {
+		const root = fixturePackageRoot({ dist: "backlog" });
+		expect(resolveBinaryPath("linux", root)).toBe(join(root, "dist", "backlog"));
 	});
 
-	it("falls back to darwin-x64 when arm64 Node only has the x64 package", () => {
-		const resolver = resolverFor(["backlog.md-darwin-x64/backlog"]);
-		expect(resolveBinaryPath("darwin", "arm64", resolver)).toBe("/node_modules/backlog.md-darwin-x64/backlog");
+	it("fails hard for an unbuilt source checkout", () => {
+		const root = fixturePackageRoot({ src: true });
+		expect(() => resolveBinaryPath("linux", root)).toThrow("bun install && bun run build");
+		expectCode("BACKLOG_BUILD_MISSING", () => resolveBinaryPath("linux", root));
 	});
 
-	it("falls back to darwin-arm64 when Rosetta x64 Node only has the arm64 package", () => {
-		const resolver = resolverFor(["backlog.md-darwin-arm64/backlog"]);
-		expect(resolveBinaryPath("darwin", "x64", resolver)).toBe("/node_modules/backlog.md-darwin-arm64/backlog");
+	it("fails hard for an install whose lifecycle scripts were skipped", () => {
+		const root = emptyPackageRoot();
+		expect(() => resolveBinaryPath("linux", root)).toThrow("--allow-scripts=backlog.md");
+		expectCode("BACKLOG_BUILD_MISSING", () => resolveBinaryPath("linux", root));
 	});
 
-	it("throws the original error when no darwin package is installed", () => {
-		expect(() => resolveBinaryPath("darwin", "arm64", resolverFor([]))).toThrow(
-			"Cannot find module 'backlog.md-darwin-arm64/backlog'",
-		);
+	it("falls back to the extensionless dist build on windows", () => {
+		const root = fixturePackageRoot({ dist: "backlog" });
+		expect(resolveBinaryPath("win32", root)).toBe(join(root, "dist", "backlog"));
+	});
+});
+
+function expectCode(code: string, fn: () => unknown) {
+	try {
+		fn();
+		throw new Error(`expected ${fn} to throw`);
+	} catch (error) {
+		expect((error as { code?: string }).code).toBe(code);
+	}
+}
+
+describe("getSourceBinaryPath", () => {
+	it("prefers backlog.exe on windows", () => {
+		const root = fixturePackageRoot({ dist: "backlog.exe" });
+		expect(getSourceBinaryPath("win32", root)).toBe(join(root, "dist", "backlog.exe"));
 	});
 
-	it("does not fall back across arches on linux", () => {
-		const resolver = resolverFor(["backlog.md-linux-arm64/backlog"]);
-		expect(() => resolveBinaryPath("linux", "x64", resolver)).toThrow(
-			"Cannot find module 'backlog.md-linux-x64/backlog'",
-		);
-	});
-
-	it("resolves the .exe binary on windows", () => {
-		const resolver = resolverFor(["backlog.md-windows-x64/backlog.exe"]);
-		expect(resolveBinaryPath("win32", "x64", resolver)).toBe("/node_modules/backlog.md-windows-x64/backlog.exe");
+	it("returns null when dist has no binary", () => {
+		expect(getSourceBinaryPath("linux", emptyPackageRoot())).toBeNull();
 	});
 });
 

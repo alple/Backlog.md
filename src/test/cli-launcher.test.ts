@@ -1,12 +1,10 @@
 import { afterAll, describe, expect, it } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createLauncherInstall } from "./test-utils.ts";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { getCandidatePackageNames } = require("../../scripts/resolveBinary.cjs");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { getSignalExitCode, isArchitectureSignal, isBinaryInstallError } = require("../../scripts/cli.cjs");
 
@@ -32,17 +30,42 @@ afterAll(async () => {
 });
 
 describe("cli launcher", () => {
-	it("prints install guidance and exits 1 when no platform package is installed", async () => {
+	it("fails closed with fix instructions when an install has no built binary", async () => {
 		const dir = await createLauncherDir();
 		const result = runLauncher(dir, ["--version"]);
 		expect(result.status).toBe(1);
-		expect(result.stderr).toContain(`Binary package not installed for ${process.platform}-${process.arch}.`);
-		expect(result.stderr).toContain(`Tried packages: ${getCandidatePackageNames().join(", ")}`);
-		expect(result.stderr).toContain(`Detected: ${process.platform}-${process.arch}`);
+		expect(result.stderr).toContain("--allow-scripts=backlog.md");
+		expect(result.stderr).toContain("GitHub Releases");
+		expect(result.stderr).not.toContain("Binary package not installed");
 	});
 
-	it.skipIf(isWindows)("spawns the installed binary, forwarding args and exit code", async () => {
-		const dir = await createLauncherDir('#!/bin/sh\necho "args: $@"\nexit 7\n');
+	it("tells source checkouts to build instead of falling back to registry packages", async () => {
+		const dir = await createLauncherDir();
+		await mkdir(join(dir, "src"), { recursive: true });
+		await writeFile(join(dir, "src", "cli.ts"), "");
+		const result = runLauncher(dir, ["--version"]);
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("bun install && bun run build");
+		expect(result.stderr).not.toContain("Binary package not installed");
+	});
+
+	it.skipIf(isWindows)("prefers a local dist build over the installed platform package", async () => {
+		const dir = await createLauncherDir('#!/bin/sh\necho "from platform package"\n');
+		await mkdir(join(dir, "dist"), { recursive: true });
+		const distBinary = join(dir, "dist", isWindows ? "backlog.exe" : "backlog");
+		await writeFile(distBinary, '#!/bin/sh\necho "from dist"\n');
+		await chmod(distBinary, 0o755);
+		const result = runLauncher(dir, ["--version"]);
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain("from dist");
+	});
+
+	it.skipIf(isWindows)("spawns the dist build, forwarding args and exit code", async () => {
+		const dir = await createLauncherDir('#!/bin/sh\necho "from platform package"\n');
+		await mkdir(join(dir, "dist"), { recursive: true });
+		const distBinary = join(dir, "dist", isWindows ? "backlog.exe" : "backlog");
+		await writeFile(distBinary, '#!/bin/sh\necho "args: $@"\nexit 7\n');
+		await chmod(distBinary, 0o755);
 		const result = runLauncher(dir, ["task", "list"]);
 		expect(result.status).toBe(7);
 		expect(result.stdout).toContain("args: task list");
