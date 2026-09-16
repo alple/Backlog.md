@@ -19,6 +19,16 @@
 
 ![Backlog demo GIF using: backlog board](./.github/backlog-v1.40.gif)
 
+## Running this fork
+
+This fork tracks upstream with extra features on the `swimlanes` branch. Two ways to run it elsewhere:
+
+- **From source (requires [bun](https://bun.sh)):** `npx --allow-scripts=backlog.md github:alple/Backlog.md#swimlanes` or `npm i -g --allow-scripts=backlog.md github:alple/Backlog.md#swimlanes`. The install builds the binary with bun; a missing bun fails the install on purpose — it never falls back to the upstream npm package. Recent npm blocks install scripts by default, hence the flag (older npm and bun install run the build automatically). If scripts were skipped, the CLI fails with instructions instead of running the wrong binary.
+- **Prebuilt binary:** grab your platform's binary from a [GitHub Release](https://github.com/alple/Backlog.md/releases) and put it on `PATH` (or symlink it as `backlog`).
+
+Fork versions are tagged `v0.1`, `v0.2`, ... via `bun run bump <major|minor|patch|x.y[.z]>` — it bumps `package.json`, commits, and creates the tag; pushing the tag is what starts the release.
+
+Local workflow: `bun install && bun run build`, then run `dist/backlog`. Temporary hack (reverted by the next `bun install`): overwrite `node_modules/backlog.md-<platform>-<arch>/backlog` with `dist/backlog` to make `npx -y .` run the fork.
 
 ---
 
