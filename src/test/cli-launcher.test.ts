@@ -50,7 +50,7 @@ describe("cli launcher", () => {
 		const dir = await createLauncherDir();
 		const result = runLauncher(dir, ["--version"]);
 		expect(result.status).toBe(1);
-		expect(result.stderr).toContain("--allow-scripts=backlog.md");
+		expect(result.stderr).toContain("install scripts");
 		expect(result.stderr).toContain("GitHub Releases");
 		expect(result.stderr).not.toContain("Binary package not installed");
 	});

@@ -5,8 +5,10 @@
   "module": "src/cli.ts",
   "files": [
     "scripts/*.cjs",
-    "dist/backlog",
-    "dist/backlog.exe",
+    "scripts/build.ts",
+    "src",
+    "tsconfig.json",
+    "bun.lock",
     "README.md",
     "LICENSE"
   ],
@@ -53,6 +55,7 @@
     "check:types": "bunx tsc --noEmit",
     "bump": "bun scripts/bump-version.ts",
     "prepare": "node scripts/prepare-install.cjs",
+    "postinstall": "node scripts/build-install.cjs",
     "build": "bun scripts/build.ts",
     "cli": "bun src/cli.ts",
     "mcp": "bun src/cli.ts mcp start",

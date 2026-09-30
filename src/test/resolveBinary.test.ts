@@ -102,7 +102,7 @@ describe("resolveBinaryPath", () => {
 
 	it("fails hard for an install whose lifecycle scripts were skipped", () => {
 		const root = emptyPackageRoot();
-		expect(() => resolveBinaryPath("linux", root)).toThrow("--allow-scripts=backlog.md");
+		expect(() => resolveBinaryPath("linux", root)).toThrow("install scripts did not run");
 		expectCode("BACKLOG_BUILD_MISSING", () => resolveBinaryPath("linux", root));
 	});
 
