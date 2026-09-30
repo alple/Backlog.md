@@ -55,7 +55,7 @@
     "check:types": "bunx tsc --noEmit",
     "bump": "bun scripts/bump-version.ts",
     "prepare": "node scripts/prepare-install.cjs",
-    "postinstall": "node scripts/build-install.cjs",
+    "postinstall": "node scripts/postinstall-diag.cjs",
     "build": "bun scripts/build.ts",
     "cli": "bun src/cli.ts",
     "mcp": "bun src/cli.ts mcp start",
