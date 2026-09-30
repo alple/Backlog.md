@@ -96,7 +96,7 @@ describe("resolveBinaryPath", () => {
 
 	it("fails hard for an unbuilt source checkout", () => {
 		const root = fixturePackageRoot({ src: true });
-		expect(() => resolveBinaryPath("linux", root)).toThrow("bun install && bun run build");
+		expect(() => resolveBinaryPath("linux", root)).toThrow("bun install && bun run compile");
 		expectCode("BACKLOG_BUILD_MISSING", () => resolveBinaryPath("linux", root));
 	});
 

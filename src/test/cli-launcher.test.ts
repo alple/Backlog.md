@@ -107,7 +107,7 @@ exit 1
 		await writeFile(join(dir, "src", "cli.ts"), "");
 		const result = runLauncher(dir, ["--version"]);
 		expect(result.status).toBe(1);
-		expect(result.stderr).toContain("bun install && bun run build");
+		expect(result.stderr).toContain("bun install && bun run compile");
 		expect(result.stderr).not.toContain("Binary package not installed");
 	});
 
