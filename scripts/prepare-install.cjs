@@ -33,6 +33,9 @@ function fail(message) {
 function main() {
 	// Escape hatch for workflows that build the binary themselves (release CI).
 	if (process.env.BACKLOG_SKIP_PREPARE_BUILD) return;
+	// Our own `bun install` below re-runs this hook through bun's lifecycle;
+	// the nested run must not restart dependency installation.
+	if (process.env.BACKLOG_PREPARE_NESTED) return;
 	// Registry-style context: nothing to build, the platform packages ship the binary.
 	if (!isSourceCheckout()) return;
 
@@ -49,6 +52,20 @@ function main() {
 		console.error("Install bun first (https://bun.sh), then re-run the install.");
 		console.error("Alternatively, download a prebuilt binary from the GitHub Releases page.");
 		process.exit(1);
+	}
+
+	// npm runs a git dep's prepare before its devDependencies are extracted
+	// (pacote prepares the staging clone), so the build's imports can be
+	// missing. bun install is idempotent; BACKLOG_PREPARE_NESTED keeps the
+	// child's own prepare hook from recursing into this logic.
+	console.log("backlog.md: installing dependencies with bun...");
+	const install = spawnSync("bun", ["install", "--frozen-lockfile"], {
+		stdio: "inherit",
+		cwd: PACKAGE_ROOT,
+		env: { ...process.env, BACKLOG_PREPARE_NESTED: "1" },
+	});
+	if (install.error || install.status !== 0) {
+		fail("dependency installation with bun failed; fix the error above and re-run the install.");
 	}
 
 	console.log("backlog.md: building the CLI from source with bun (one-time)...");
