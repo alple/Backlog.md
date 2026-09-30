@@ -101,13 +101,15 @@ exit 1
 		expect(result.stderr).not.toContain("Binary package not installed");
 	});
 
-	it("tells source checkouts to build instead of falling back to registry packages", async () => {
+	it("fails closed with build guidance when the on-demand build fails", async () => {
 		const dir = await createLauncherDir();
 		await mkdir(join(dir, "src"), { recursive: true });
 		await writeFile(join(dir, "src", "cli.ts"), "");
+		// A compile script that fails keeps the build attempt fast and deterministic.
+		await writeFile(join(dir, "package.json"), JSON.stringify({ scripts: { compile: "exit 7" } }));
 		const result = runLauncher(dir, ["--version"]);
 		expect(result.status).toBe(1);
-		expect(result.stderr).toContain("bun install && bun run compile");
+		expect(result.stderr).toContain("the source build failed");
 		expect(result.stderr).not.toContain("Binary package not installed");
 	});
 
