@@ -85,7 +85,7 @@ describe("CLI Integration", () => {
 			expect(overview).not.toContain("The detailed guides contain the procedure");
 			expect(overview).toContain('backlog search "query" --plain');
 			expect(overview).toContain('backlog task list --search "login" --labels frontend,bug --limit 20 --plain');
-			expect(overview).toContain("backlog task view BACK-123 --plain");
+			expect(overview).toMatch(/backlog task view [A-Z]+-123 --plain/);
 			expect(overview).toContain(
 				"Read the matching guide before taking these actions; this overview does not replace it:",
 			);
@@ -97,9 +97,9 @@ describe("CLI Integration", () => {
 				"`backlog instructions task-finalization` — before checking acceptance criteria, writing final summaries, or marking work finished",
 			);
 			expect(overview).not.toContain('backlog task create "Title"');
-			expect(overview).not.toContain("backlog task edit BACK-123 --plan");
-			expect(overview).not.toContain("backlog task edit BACK-123 --check-ac 1");
-			expect(overview).not.toContain("backlog task edit BACK-123 -s Done");
+			expect(overview).not.toMatch(/backlog task edit [A-Z]+-123 --plan/);
+			expect(overview).not.toMatch(/backlog task edit [A-Z]+-123 --check-ac 1/);
+			expect(overview).not.toMatch(/backlog task edit [A-Z]+-123 -s Done/);
 			expect(overview).toContain(
 				"Never edit task, draft, document, decision, or milestone markdown files directly; commands preserve metadata, relationships, and history.",
 			);
@@ -142,22 +142,22 @@ describe("CLI Integration", () => {
 			expect(taskExecution).toContain(
 				'backlog task list --status "<active status>" --assignee @your-name --labels backend --search "auth" --limit 20 --plain',
 			);
-			expect(taskExecution).toContain('backlog task edit BACK-123 -s "<active status>" -a @your-name');
-			expect(taskExecution).not.toContain('backlog task edit BACK-123 -s "In Progress" -a @your-name');
+			expect(taskExecution).toMatch(/backlog task edit [A-Z]+-123 -s "<active status>" -a @your-name/);
+			expect(taskExecution).not.toMatch(/backlog task edit [A-Z]+-123 -s "In Progress" -a @your-name/);
 			expect(taskExecution).toContain(
 				"Research the current system, including relevant code, tests, conventions, and recent changes",
 			);
 			expect(taskExecution).toContain("Record the current plan in the task before implementation");
 			expect(taskExecution).toContain("or more repeatable `--append-plan` values");
-			expect(taskExecution).toContain(
-				'backlog task edit BACK-123 --plan "1. Revised approach" --append-plan "2. Verify it"',
+			expect(taskExecution).toMatch(
+				/backlog task edit [A-Z]+-123 --plan "1. Revised approach" --append-plan "2. Verify it"/,
 			);
 			expect(taskExecution).toContain(
 				"If the plan contains a material product, architecture, or workflow decision, or the project or user requires plan",
 			);
-			const viewIndex = taskExecution.indexOf("backlog task view BACK-123 --plain");
-			const eligibilityIndex = taskExecution.indexOf("Review its current status");
-			const activateIndex = taskExecution.indexOf('backlog task edit BACK-123 -s "<active status>" -a @your-name');
+			const viewIndex = taskExecution.search(/backlog task view [A-Z]+-123 --plain/);
+			const eligibilityIndex = taskExecution.search(/Review its current status/);
+			const activateIndex = taskExecution.search(/backlog task edit [A-Z]+-123 -s "<active status>" -a @your-name/);
 			const researchIndex = taskExecution.indexOf("Research the current system");
 			const planIndex = taskExecution.indexOf("Record the current plan in the task");
 			const conditionalReviewIndex = taskExecution.indexOf(
@@ -177,8 +177,8 @@ describe("CLI Integration", () => {
 			expect(taskExecution).toContain("verify each acceptance criterion with objective evidence before checking it");
 			expect(taskFinalization).toContain("configured final status");
 			expect(taskFinalization).toContain("Check accepted statuses with `backlog task edit --help`");
-			expect(taskFinalization).toContain('backlog task edit BACK-123 -s "<terminal status>"');
-			expect(taskFinalization).not.toContain("backlog task edit BACK-123 -s Done");
+			expect(taskFinalization).toMatch(/backlog task edit [A-Z]+-123 -s "<terminal status>"/);
+			expect(taskFinalization).not.toMatch(/backlog task edit [A-Z]+-123 -s Done/);
 			expect(taskFinalization).toContain("Check only proven items");
 			expect(taskFinalization).toContain(
 				"For UI or interactive work, exercise the behavior through a browser, DOM script, test runner, or documented manual interaction.",
