@@ -1,5 +1,5 @@
 ---
-id: BACK-688
+id: BCK-688
 title: >-
   Web UI: hide Backlog column from both boards and add a Backlog view for
   Draft/Backlog/To Do
@@ -16,7 +16,7 @@ ordinal: 319000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Fork-only follow-up to BACK-687. Decisions (Alex): (1) The Backlog status column is hidden from BOTH the Kanban board and the Kanban Swim view - it stays a real status, assignable from the task editor, visible in All Tasks/Milestones. (2) A new 'Backlog' nav item below 'Kanban Swim' (route /backlog) shows tickets in Draft + Backlog + To Do, reusing the existing TaskList table via a thin wrapper. Drafts are a separate corpus (loaded by DraftsList via /api/drafts and the drafts-updated event), so the wrapper fetches drafts itself and merges them with the planning-status tasks. Existing-file changes stay additive: App.tsx (status filter import + statuses prop change + route), SideNavigation.tsx (nav links), TaskList.tsx (one optional title prop defaulting to the current heading). Status policy lives in one new testable module (src/web/lib/status-policy.ts) so hidden/planning statuses are easy to adjust later.
+Fork-only follow-up to BCK-687. Decisions (Alex): (1) The Backlog status column is hidden from BOTH the Kanban board and the Kanban Swim view - it stays a real status, assignable from the task editor, visible in All Tasks/Milestones. (2) A new 'Backlog' nav item below 'Kanban Swim' (route /backlog) shows tickets in Draft + Backlog + To Do, reusing the existing TaskList table via a thin wrapper. Drafts are a separate corpus (loaded by DraftsList via /api/drafts and the drafts-updated event), so the wrapper fetches drafts itself and merges them with the planning-status tasks. Existing-file changes stay additive: App.tsx (status filter import + statuses prop change + route), SideNavigation.tsx (nav links), TaskList.tsx (one optional title prop defaulting to the current heading). Status policy lives in one new testable module (src/web/lib/status-policy.ts) so hidden/planning statuses are easy to adjust later.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

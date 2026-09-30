@@ -1,5 +1,5 @@
 ---
-id: BACK-689
+id: BCK-689
 title: >-
   Web UI: initiative containers - status-ignored umbrella tasks with swim-lane
   grouping
@@ -16,7 +16,7 @@ ordinal: 320000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Fork-only follow-up to BACK-687/688 implementing the Jira-style container split Alex approved: an umbrella/initiative is a task with type 'initiative' (added per-repo via config types) that never participates in status semantics - it is filtered off the Kanban board, Kanban Swim, and the Backlog view exactly like the Backlog status column is (status-policy.ts + additive App.tsx filters), while remaining fully editable (description/notes/--doc references) and visible in All Tasks; retirement = archiving the task. Feature roots stay epic tasks carrying their spec via --doc/description. The Kanban Swim view gains the board visual: initiative lanes (drag-reorderable among siblings via the existing ordinal/reorder endpoint, collapsible, no progress bar of their own, rollup count/progress over their subtree) that nest their child epic lanes plus a nested 'Tasks' lane for direct non-epic children. Epic lane drag-reorder becomes sibling-scoped (within the same parent initiative, or among standalone epics). Existing-file changes stay additive (App.tsx only); all other code lives in our fork files (status-policy.ts, epic-lanes.ts, SwimBoard.tsx) with tests updated.
+Fork-only follow-up to BCK-687/688 implementing the Jira-style container split Alex approved: an umbrella/initiative is a task with type 'initiative' (added per-repo via config types) that never participates in status semantics - it is filtered off the Kanban board, Kanban Swim, and the Backlog view exactly like the Backlog status column is (status-policy.ts + additive App.tsx filters), while remaining fully editable (description/notes/--doc references) and visible in All Tasks; retirement = archiving the task. Feature roots stay epic tasks carrying their spec via --doc/description. The Kanban Swim view gains the board visual: initiative lanes (drag-reorderable among siblings via the existing ordinal/reorder endpoint, collapsible, no progress bar of their own, rollup count/progress over their subtree) that nest their child epic lanes plus a nested 'Tasks' lane for direct non-epic children. Epic lane drag-reorder becomes sibling-scoped (within the same parent initiative, or among standalone epics). Existing-file changes stay additive (App.tsx only); all other code lives in our fork files (status-policy.ts, epic-lanes.ts, SwimBoard.tsx) with tests updated.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
