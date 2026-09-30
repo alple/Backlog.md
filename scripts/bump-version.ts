@@ -20,52 +20,36 @@ function gitError(step: string, result: { stdout: string; stderr: string }): str
 }
 
 function main() {
-	const input = process.argv[2];
-	if (!input) fail("usage: bun run bump <major|minor|patch|x.y[.z]>");
+	const next = process.argv[2];
+	if (!next) fail("usage: bun run bump <x.y.z[-vN]>");
+
+	// Fork version scheme: the version encodes the upstream base plus a fork
+	// iteration (e.g. 1.53.0-v1), and the tag is the version verbatim.
+	if (!/^\d+\.\d+\.\d+(-v\d+)?$/.test(next)) fail(`invalid version '${next}' (expected x.y.z or x.y.z-vN)`);
 
 	const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };
-	const current = packageJson.version ?? "0.0.0";
-	const [major = 0, minor = 0, patch = 0] = current.split(".").map((part) => Number.parseInt(part, 10) || 0);
+	const current = packageJson.version ?? "";
+	if (next === current) fail(`already at version ${current}`);
 
-	let next: [number, number, number];
-	if (input === "major") {
-		next = [major + 1, 0, 0];
-	} else if (input === "minor") {
-		next = [major, minor + 1, 0];
-	} else if (input === "patch") {
-		next = [major, minor, patch + 1];
-	} else {
-		const [first = 0, second = 0, third = 0] = input.split(".").map((part) => Number.parseInt(part, 10));
-		const valid =
-			input.split(".").length >= 2 &&
-			input.split(".").length <= 3 &&
-			[first, second, third].every((part) => Number.isInteger(part) && part >= 0);
-		if (!valid) fail(`invalid version '${input}' (expected major|minor|patch or x.y[.z])`);
-		next = [first, second, third];
-	}
-
-	const nextVersion = next.join(".");
-	if (nextVersion === current) fail(`already at version ${current}`);
-	packageJson.version = nextVersion;
-
-	// Fork tag scheme: x.y.0 tags as vX.Y, anything else keeps its patch digit.
-	const tag = `v${nextVersion.replace(/\.0$/, "")}`;
+	const tag = `v${next}`;
 	if (git(["rev-parse", "-q", "--verify", `refs/tags/${tag}`]).status === 0) {
 		fail(`tag ${tag} already exists`);
 	}
+
+	packageJson.version = next;
 
 	writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
 	// Stage first so lint-staged's pre-commit hook has files to operate on.
 	const add = git(["add", "package.json"]);
 	if (add.status !== 0) fail(gitError("git add package.json", add));
-	const commit = git(["commit", "-m", `chore: bump version to ${nextVersion}`, "--", "package.json"]);
+	const commit = git(["commit", "-m", `chore: bump version to ${next}`, "--", "package.json"]);
 	if (commit.status !== 0) fail(gitError("git commit of package.json", commit));
 	const tagResult = git(["tag", "-a", tag, "-m", `Backlog.md fork ${tag}`]);
 	if (tagResult.status !== 0) fail(gitError(`git tag ${tag}`, tagResult));
 
 	const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]).stdout;
-	console.log(`Version bumped: ${current} -> ${nextVersion}, tagged ${tag}.`);
+	console.log(`Version bumped: ${current} -> ${next}, tagged ${tag}.`);
 	console.log("Pushing the tag is what starts the release:");
 	console.log(`  git push origin ${branch} ${tag}`);
 }
