@@ -23,7 +23,7 @@
 
 This fork tracks upstream with extra features on the `swimlanes` branch. Two ways to run it elsewhere:
 
-- **From source (requires [bun](https://bun.sh)):** `npx --allow-scripts=backlog.md github:alple/Backlog.md#swimlanes` or `npm i -g --allow-scripts=backlog.md github:alple/Backlog.md#swimlanes`. The install builds the binary with bun; a missing bun fails the install on purpose — it never falls back to the upstream npm package. Recent npm blocks install scripts by default, hence the flag (older npm and bun install run the build automatically). If scripts were skipped, the CLI fails with instructions instead of running the wrong binary.
+- **From source (requires [bun](https://bun.sh)):** `npx github:alple/Backlog.md#swimlanes` or `npm i -g github:alple/Backlog.md#swimlanes`. The install ships the fork's source; the binary is built once on the first `backlog` run (bun install + build, about a minute), and later runs are instant. A missing bun fails with an explicit error — it never falls back to the upstream npm package. The `#swimlanes` ref is required: the default `main` branch mirrors upstream without the fork features.
 - **Prebuilt binary:** grab your platform's binary from a [GitHub Release](https://github.com/alple/Backlog.md/releases) and put it on `PATH` (or symlink it as `backlog`).
 
 Fork versions encode the upstream base plus a fork iteration, e.g. `1.53.0-v1`: run `bun run bump 1.53.0-v1` (any `x.y.z-vN`) — it writes `package.json`, commits, and creates the matching `v1.53.0-v1` tag; pushing the tag is what starts the release.
