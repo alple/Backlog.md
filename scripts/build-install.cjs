@@ -26,10 +26,18 @@ function main() {
 	// Guard against re-entry if a bun version ever runs the root postinstall
 	// from the `bun install` below.
 	if (process.env.BACKLOG_BUILD_NESTED) return;
-	// Git clones (dev checkouts and npm's git-install staging clones) must not
-	// build here: dev builds are documented as `bun run build`, and the
-	// staging clone's output is never packed. The build belongs to the package
-	// extracted from the packed tarball, which has no .git.
+	// A tree whose prepare hook ran (npm's git-dep staging tree, local packs)
+	// is being prepared for packing, not installed for use: its output would
+	// be discarded. Prepare leaves a marker; skip and remove it.
+	const prepareMarker = path.join(PACKAGE_ROOT, "node_modules", ".backlog-prepare-marker");
+	if (fs.existsSync(prepareMarker)) {
+		fs.rmSync(prepareMarker);
+		return;
+	}
+	// Git clones (dev checkouts, e.g. after npm rebuild re-runs lifecycle
+	// scripts) must not build here: dev builds are documented as
+	// `bun run build`. The build belongs to the package extracted from the
+	// packed tarball, which has no .git.
 	if (fs.existsSync(path.join(PACKAGE_ROOT, ".git"))) return;
 	// Stripped package without source: nothing to build; the runtime resolver
 	// fails closed with instructions if dist/ is also missing.
