@@ -1,6 +1,6 @@
 {
   "name": "backlog.md",
-  "version": "0.1.0",
+  "version": "1.53.0-v1",
   "type": "module",
   "module": "src/cli.ts",
   "files": [
