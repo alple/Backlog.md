@@ -69,7 +69,7 @@ function resolveBinaryPath(platform = process.platform, root = PACKAGE_ROOT) {
 	const error = new Error(
 		fs.existsSync(path.join(root, "src", "cli.ts"))
 			? "This is a source checkout of Backlog.md but no built binary was found in dist/. Build it with: bun install && bun run build"
-			: "This Backlog.md install has no built binary because install scripts did not run. Re-run the install so scripts can execute (see the README's fork section for the flag your npm version needs), or download a prebuilt binary from the GitHub Releases page.",
+			: "This Backlog.md install has no built binary and no source to build one from. Reinstall it from github:alple/Backlog.md#swimlanes, or download a prebuilt binary from the GitHub Releases page.",
 	);
 	error.code = "BACKLOG_BUILD_MISSING";
 	throw error;

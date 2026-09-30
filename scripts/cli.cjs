@@ -2,6 +2,7 @@
 
 const { spawn } = require("node:child_process");
 const { constants: osConstants } = require("node:os");
+const { buildOnDemand } = require("./build-on-demand.cjs");
 const { getCandidatePackageNames, isRosettaTranslated, resolveBinaryPath } = require("./resolveBinary.cjs");
 
 function printInstallHelp() {
@@ -62,14 +63,28 @@ function main() {
 		binaryPath = resolveBinaryPath();
 	} catch (error) {
 		if (error?.code === "BACKLOG_BUILD_MISSING") {
-			console.error(error.message);
-			console.error("Alternatively, download a prebuilt binary from the GitHub Releases page.");
+			// Source installs (npx/npm git installs, dev checkouts) build the
+			// binary on first run: package installs ship no lifecycle scripts,
+			// so npm never spawns the nested git-install reify that corrupts
+			// the install target.
+			if (!buildOnDemand()) {
+				console.error(error.message);
+				console.error("Alternatively, download a prebuilt binary from the GitHub Releases page.");
+				process.exit(1);
+			}
+			try {
+				binaryPath = resolveBinaryPath();
+			} catch (retryError) {
+				console.error(retryError.message);
+				console.error("Alternatively, download a prebuilt binary from the GitHub Releases page.");
+				process.exit(1);
+			}
+		} else {
+			console.error(`Binary package not installed for ${process.platform}-${process.arch}.`);
+			console.error(`Tried packages: ${getCandidatePackageNames().join(", ")}`);
+			printInstallHelp();
 			process.exit(1);
 		}
-		console.error(`Binary package not installed for ${process.platform}-${process.arch}.`);
-		console.error(`Tried packages: ${getCandidatePackageNames().join(", ")}`);
-		printInstallHelp();
-		process.exit(1);
 	}
 
 	// Clean up unexpected args some global shims pass (e.g. bun) like the binary path itself

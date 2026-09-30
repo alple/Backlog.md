@@ -32,8 +32,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       BIN: backlog-bin${{ contains(matrix.target,'windows') && '.exe' || '' }}
-      # The workflow builds the binary explicitly below; the prepare hook must not rebuild it.
-      BACKLOG_SKIP_PREPARE_BUILD: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2

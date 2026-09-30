@@ -21,6 +21,7 @@ async function createLauncherDir(binaryContent?: string): Promise<string> {
 	await mkdir(join(dir, "scripts"), { recursive: true });
 	await cp(join(scriptsDir, "cli.cjs"), join(dir, "scripts", "cli.cjs"));
 	await cp(join(scriptsDir, "resolveBinary.cjs"), join(dir, "scripts", "resolveBinary.cjs"));
+	await cp(join(scriptsDir, "build-on-demand.cjs"), join(dir, "scripts", "build-on-demand.cjs"));
 	// A package.json and node_modules dir keep Bun's auto-install from resolving real packages
 	await writeFile(join(dir, "package.json"), "{}");
 	await mkdir(join(dir, "node_modules"), { recursive: true });
@@ -35,10 +36,13 @@ async function createLauncherDir(binaryContent?: string): Promise<string> {
 	return dir;
 }
 
-function runLauncher(dir: string, args: string[] = []) {
+function runLauncher(dir: string, args: string[] = [], env?: NodeJS.ProcessEnv) {
 	// The published launcher has a Node shebang. Running it through the Bun test
 	// process can deadlock when a fixture executable exits via a Unix signal.
-	return spawnSync("node", [join(dir, "scripts", "cli.cjs"), ...args], { encoding: "utf8" });
+	return spawnSync("node", [join(dir, "scripts", "cli.cjs"), ...args], {
+		encoding: "utf8",
+		...(env ? { env } : {}),
+	});
 }
 
 afterAll(async () => {
@@ -50,8 +54,50 @@ describe("cli launcher", () => {
 		const dir = await createLauncherDir();
 		const result = runLauncher(dir, ["--version"]);
 		expect(result.status).toBe(1);
-		expect(result.stderr).toContain("install scripts");
+		expect(result.stderr).toContain("no source to build");
 		expect(result.stderr).toContain("GitHub Releases");
+		expect(result.stderr).not.toContain("Binary package not installed");
+	});
+
+	it.skipIf(isWindows)("builds the binary on demand on the first run", async () => {
+		const dir = await createLauncherDir();
+		await mkdir(join(dir, "src"), { recursive: true });
+		await writeFile(join(dir, "src", "cli.ts"), "");
+		// A bun shim stands in for the real bun: it answers --version, accepts
+		// install, and "builds" dist/backlog on `bun run build`.
+		const binDir = join(dir, "fake-bin");
+		await mkdir(binDir, { recursive: true });
+		const bunShim = join(binDir, "bun");
+		const distDir = join(dir, "dist").replaceAll("'", "'\\''");
+		await writeFile(
+			bunShim,
+			`#!/bin/sh
+case "$1" in
+  --version) echo "1.3.14"; exit 0 ;;
+  install) exit 0 ;;
+  run)
+    mkdir -p '${distDir}'
+    printf '#!/bin/sh\necho "built on demand"\n' > '${distDir}/backlog'
+    chmod +x '${distDir}/backlog'
+    exit 0 ;;
+esac
+exit 1
+`,
+		);
+		await chmod(bunShim, 0o755);
+		const result = runLauncher(dir, ["--version"], { ...process.env, PATH: `${binDir}:${process.env.PATH}` });
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain("built on demand");
+	});
+
+	it.skipIf(isWindows)("fails hard naming bun when the on-demand build cannot run", async () => {
+		const dir = await createLauncherDir();
+		await mkdir(join(dir, "src"), { recursive: true });
+		await writeFile(join(dir, "src", "cli.ts"), "");
+		// An empty PATH and a bun-less PATH keep spawnSync("bun") from resolving.
+		const result = runLauncher(dir, ["--version"], { ...process.env, PATH: "/usr/bin:/bin" });
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("requires bun");
 		expect(result.stderr).not.toContain("Binary package not installed");
 	});
 
