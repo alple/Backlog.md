@@ -55,7 +55,7 @@
     "check:types": "bunx tsc --noEmit",
     "bump": "bun scripts/bump-version.ts",
     "setup": "husky",
-    "build": "bun scripts/build.ts",
+    "compile": "bun scripts/build.ts",
     "cli": "bun src/cli.ts",
     "mcp": "bun src/cli.ts mcp start",
     "update-nix": "bunx bun2nix@2.1.1 -o bun.nix"

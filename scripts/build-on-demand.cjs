@@ -55,7 +55,9 @@ function buildOnDemand() {
 	}
 
 	console.log("backlog.md: building the CLI from source with bun (one-time)...");
-	const build = spawnSync("bun", ["run", "build"], { stdio: "inherit" });
+	// The script is named "compile" on purpose: a scripts entry named "build"
+	// makes npm spawn its nested git-install reify, which corrupts installs.
+	const build = spawnSync("bun", ["run", "compile"], { stdio: "inherit" });
 	if (build.error || build.status !== 0) {
 		fail("the source build failed; fix the error above and re-run the command.");
 	}

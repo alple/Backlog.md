@@ -42,7 +42,7 @@ is necessary to prevent misunderstanding or error, and never use it to restate t
 - `bun run setup` - One-time husky git-hooks setup (after cloning)
 - `bunx tsc --noEmit` - Type-check code
 - `bun run check .` - Run all Biome checks (format + lint)
-- `bun run build` - Build the CLI tool
+- `bun run compile` - Build the CLI tool
 - `bun run cli` - Uses the CLI tool directly
 
 ### Testing

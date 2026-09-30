@@ -12,7 +12,7 @@
 - `bun run format` - Format code with Biome
 - `bun run lint` - Lint and auto-fix with Biome
 - `bun run check` - Run all Biome checks (format + lint)
-- `bun run build` - Build the CLI tool
+- `bun run compile` - Build the CLI tool
 - `bun run cli` - Uses the CLI tool directly
 
 ### Testing
