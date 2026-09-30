@@ -1,28 +1,44 @@
 import { afterAll, describe, expect, it } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createLauncherInstall } from "./test-utils.ts";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { getCandidatePackageNames } = require("../../scripts/resolveBinary.cjs");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { getSignalExitCode, isArchitectureSignal, isBinaryInstallError } = require("../../scripts/cli.cjs");
 
 const isWindows = process.platform === "win32";
+const scriptsDir = join(import.meta.dir, "..", "..", "scripts");
 const tempDirs: string[] = [];
 
-/** Copy the launcher scripts into a temp dir with an optional fixture platform binary. */
+/** Copy the launcher scripts into a package-layout temp dir with an optional fixture platform binary. */
 async function createLauncherDir(binaryContent?: string): Promise<string> {
 	const dir = await mkdtemp(join(tmpdir(), "backlog-launcher-"));
 	tempDirs.push(dir);
-	await createLauncherInstall(dir, binaryContent === undefined ? undefined : (path) => writeFile(path, binaryContent));
+	// Mirror the real package layout: launcher scripts live in scripts/, one level below the package root.
+	await mkdir(join(dir, "scripts"), { recursive: true });
+	await cp(join(scriptsDir, "cli.cjs"), join(dir, "scripts", "cli.cjs"));
+	await cp(join(scriptsDir, "resolveBinary.cjs"), join(dir, "scripts", "resolveBinary.cjs"));
+	// A package.json and node_modules dir keep Bun's auto-install from resolving real packages
+	await writeFile(join(dir, "package.json"), "{}");
+	await mkdir(join(dir, "node_modules"), { recursive: true });
+	if (binaryContent !== undefined) {
+		const [packageName] = getCandidatePackageNames();
+		const packageDir = join(dir, "node_modules", packageName);
+		await mkdir(packageDir, { recursive: true });
+		const binaryPath = join(packageDir, isWindows ? "backlog.exe" : "backlog");
+		await writeFile(binaryPath, binaryContent);
+		await chmod(binaryPath, 0o755);
+	}
 	return dir;
 }
 
 function runLauncher(dir: string, args: string[] = []) {
 	// The published launcher has a Node shebang. Running it through the Bun test
 	// process can deadlock when a fixture executable exits via a Unix signal.
-	return spawnSync("node", [join(dir, "cli.cjs"), ...args], { encoding: "utf8" });
+	return spawnSync("node", [join(dir, "scripts", "cli.cjs"), ...args], { encoding: "utf8" });
 }
 
 afterAll(async () => {
