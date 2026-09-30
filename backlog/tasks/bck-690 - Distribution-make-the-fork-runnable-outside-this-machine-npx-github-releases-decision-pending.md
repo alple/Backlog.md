@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@kilo'
 created_date: '2026-09-16 10:34'
-updated_date: '2026-09-30 11:40'
+updated_date: '2026-09-30 15:16'
 labels: []
 dependencies: []
 ordinal: 321000
@@ -57,6 +57,8 @@ Decision ticket spun off 2026-09-16 after investigating how to run the fork (bra
 E2E verification (npm 11.19.1, local git+file remote as github: proxy): (1) git install with scripts allowed -> prepare built the binary in npm's staging clone, packed via new files entries, installed package runs fork code (task list responds; upstream binary absent). (2) dist-less install -> CLI fails closed with allow-scripts/Releases instructions, never touches upstream packages (BACKLOG_BUILD_MISSING). (3) Direct prepare without bun -> hard failure naming bun, exit 1 (AC#2). Nuance discovered: npm git installs also install devDependencies, and npm prepends node_modules/.bin to lifecycle PATH, so bun can be self-provisioned during installs; the hard-fail manifests when neither user PATH nor devDeps provide bun. Also: npm 11.19 blocks dependency lifecycle scripts by default (allowScripts/ npx --allow-scripts=backlog.md needed) - documented in README. Full test suite: 2911 pass, 8 skip; 1 consistent pre-existing failure (duplicate-task-repair ENAMETOOLONG - reproduces without these changes, environmental NAME_MAX issue, unrelated); 2 flaky PTY/server tests passed on re-run.
 
 Upstream sync 2026-09-30: rebased swimlanes onto MrLesk/Backlog.md main (69e7b153, upstream v1.53.0 + 11 unreleased commits; 18 upstream commits absorbed, conflicts only in package.json version line and src/test/cli-launcher.test.ts). Fork task IDs moved out of the upstream ID space: task_prefix is now bck (config.yml) and the four fork tasks are bck-687..bck-690, so upstream keeps minting back-* IDs with no duplicate-ID collisions on future syncs. Fork version scheme replaced: versions are x.y.z-vN encoding the upstream base plus a fork iteration (bump accepts explicit versions only, tags are verbatim); first release under the new scheme is 1.53.0-v1.
+
+2026-09-30 session 2 status: rebase to upstream v1.53.0+11 done and pushed; BCK prefix migration done; version scheme x.y.z-vN done; release v1.53.0-v1 published and linux-x64 binary verified (reports 1.53.0-v1). Two git-install bugs fixed on origin/swimlanes after the tag: 60e57671 (prepare now runs bun install --frozen-lockfile before building; npm runs git-dep prepare before devDeps extract) and ca2ea6c1 (symlinked src/guidelines/project-manager-backlog.md replaced with a real file; pacote tar filter drops all *Link entries from github tarballs). Clean clone + prepare verified 1.53.0-v1. OPEN: npm install -g github:alple/Backlog.md#swimlanes fails with tar EOF (code EOF, syscall read, path <staging-clone>/dist/backlog) during outer reify:unpack even though the inner staging prepare succeeds; pack+extract verified OK in isolation. Next: fix the live tar.c->tar.x pipe path (likely move the build from prepare-in-staging to postinstall-in-installed-package so dist/backlog never travels through the packed git tarball), E2E again, then release 1.53.0-v2. Full handoff: /tmp/kilo/HANDOFF-npx-install-EOF.md
 <!-- SECTION:NOTES:END -->
 
 ## Comments
